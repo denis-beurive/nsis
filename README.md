@@ -19,4 +19,7 @@ The application used for this tutorial is given here:
 * the [source code](applications/nsis_app.c) - compiled using [MinGW](https://www.mingw-w64.org/).
 * the [executable](applications/nsis_app.exe) (for Windows 11 amd64).
 
+## Examples
+
+* [basic example](installer-1)
 
