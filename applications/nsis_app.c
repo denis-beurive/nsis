@@ -1,43 +1,18 @@
-// Usage: nsis_app.exe <path to the file to create>
+// Usage: nsis_app.exe <path to the file to edit>
 
 #include <stdio.h>
-#include <fcntl.h>
-#include <time.h>
-#include <limits.h>
+#include <unistd.h>
 
-int main(const int argc, const char* const argv[]) {
+static char* const SUBLIM_TEXT = "C:\\Program Files\\Sublime Text\\sublime_text.exe";
+
+int main(const int argc, char* const argv[]) {
     if (2 != argc) {
-        fprintf(stderr, "Error: invalid command line - usage: %s <path to the file to create>\n", argv[0]);
+        fprintf(stderr, "Error: invalid command line - usage: %s <path to the file to edit>\n", argv[0]);
         return 1;
     }
-    const char* const path = argv[1];
-
-    const int arch = (int)(CHAR_BIT * sizeof(void *));
-    printf("arch = %d\n", arch);
-
-    // Test whether the given path already exists or not.
-    if (access(path, F_OK) == 0) {
-        fprintf(stdout, "The file \"%s\" exists - remove it\n", path);
-        if (0 != remove(path)) {
-            fprintf(stderr, "Error: cannot remove file \"%s\"\n", path);
-            return 1;
-        }
-    }
-
-    // Create the file.
-    FILE* const fd = fopen(path, "w");
-    if (NULL == fd) {
-        fprintf(stderr, "Error: cannot create file \"%s\"\n", path);
-        return 1;
-    }
-    const time_t timestamp = time(NULL);
-
-    if (64 == arch) {
-        fprintf(fd, "%lu\n", (unsigned long)timestamp);
-    } else {
-        fprintf(fd, "%u\n", (unsigned)timestamp);
-    }
-
-    fclose(fd);
+    char* const path = argv[1];
+    char* const exec_argv[] = { SUBLIM_TEXT, path, NULL };
+    char* const exec_envp[] = { NULL };
+    execve(SUBLIM_TEXT, exec_argv, exec_envp);
     return 0;
 }
