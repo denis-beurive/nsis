@@ -34,9 +34,19 @@ Section
   	WriteRegStr HKCU "Software\nsis_app" "Path" "$INSTDIR\nsis_app.exe" 
   	WriteRegStr HKCU "Software\nsis_app" "Version" "1.0.0"
 
+	InstallDirRegKey HKCU Software\NSIS ""
+
   	WriteRegStr HKCR "*\shell\nsis_app" "" "Open with nsis_app"
   	WriteRegStr HKCR "*\shell\nsis_app" "Icon" "$INSTDIR\nsis_app.ico"
-  	WriteRegStr HKCR "*\shell\nsis_app\command" "" '"$INSTDIR\nsis_app.exe" "%1"'
+  	WriteRegStr HKCR "*\shell\nsis_app\SubCommands" "" "aaAction1;aaAction2"
+
+	# Action 1
+  	WriteRegStr HKCR "Software\Classes\nsis_app.aaAction1" "" "Action 1"
+  	WriteRegStr HKCR "Software\Classes\nsis_app.aaAction1\command" "" '"$INSTDIR\nsis_app.exe" "%1"'
+
+  	# Action 2
+  	WriteRegStr HKCR "Software\Classes\nsis_app.aaAction2" "" "Action 2"
+  	WriteRegStr HKCR "Software\Classes\nsis_app.aaAction2\command" "" '"$INSTDIR\nsis_app.exe" "%1"'
 
 	WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\nsis_app" "DisplayName" "nsis_app"
   	WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\nsis_app" "UninstallString" "$INSTDIR\uninstaller.exe"
@@ -48,7 +58,11 @@ Section
   	WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\nsis_app" "NoRepair" 1
   	WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\nsis_app" "EstimatedSize" 20480
 
-  	# $SMPROGRAMS = %AppData%\Microsoft\Windows\Start Menu\Programs
+	# $SMPROGRAMS = %AppData%\Microsoft\Windows\Start Menu\Programs
+	# Create folder: C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\nsis_app
+	# Create shortcut: C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\nsis_app\nsis_app.lnk
+	# Create shortcut: C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\nsis_app\Uninstall nsis_app.lnk
+
  	CreateDirectory "$SMPROGRAMS\nsis_app"
  	CreateShortCut "$SMPROGRAMS\nsis_app\nsis_app.lnk" "$INSTDIR\nsis_app.exe"
  	CreateShortCut "$SMPROGRAMS\nsis_app\Uninstall nsis_app.lnk" "$INSTDIR\uninstaller.exe"
@@ -66,6 +80,8 @@ Section "Uninstall"
 	DeleteRegKey HKCU "Software\nsis_app"
 	DeleteRegKey HKCR "*\shell\nsis_app"
 	DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\nsis_app"
+	DeleteRegKey HKCR "Software\Classes\nsis_app.Action1"
+	DeleteRegKey HKCR "Software\Classes\nsis_app.Action2"
 
 	Delete "$SMPROGRAMS\nsis_app\nsis_app.lnk"
   	Delete "$SMPROGRAMS\nsis_app\Uninstall nsis_app.lnk"
@@ -75,5 +91,6 @@ Section "Uninstall"
   	Delete "$INSTDIR\uninstaller.exe"
 
 	RMDir $INSTDIR
+	RMDir "$SMPROGRAMS\nsis_app"
 
 SectionEnd

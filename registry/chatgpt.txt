@@ -339,3 +339,97 @@ SectionEnd
 - **Compatibilité avec les versions de Windows** : Ce script est compatible avec les versions modernes de Windows (Windows 7, 8, 10, 11). Les entrées dans le registre sont essentielles pour apparaître dans "Applications et fonctionnalités" et dans le Panneau de configuration.
 
 En suivant ces étapes, votre application apparaîtra correctement dans la liste des applications installées de Windows, avec la possibilité de la désinstaller directement via cette interface.
+
+#####################################################################################################
+
+Oui, il est possible d'ajouter un item dans le menu contextuel de l'explorateur de fichiers de Windows via un script NSIS. Cela se fait en modifiant le registre de Windows pour ajouter un menu contextuel spécifique à votre application. Vous pouvez également créer un sous-menu qui propose des actions supplémentaires.
+
+### Étapes pour y parvenir :
+
+1. **Ajouter un item dans le menu contextuel** : Vous devez ajouter des entrées dans le registre Windows sous la clé correspondante aux fichiers ou types de fichiers sur lesquels vous voulez que le menu contextuel apparaisse.
+2. **Créer un sous-menu** : Vous pouvez définir des sous-commandes qui apparaîtront comme un sous-menu lorsque l'utilisateur passe sa souris sur votre entrée dans le menu contextuel.
+
+### Exemple de script NSIS
+
+Voici un exemple de script NSIS qui ajoute un item au menu contextuel pour tous les fichiers et qui ouvre un sous-menu avec deux actions supplémentaires :
+
+```nsis
+# Nom de l'installeur
+OutFile "MonApplicationInstaller.exe"
+
+# Nom de l'application et répertoire d'installation
+Name "MonApplication"
+InstallDir "$PROGRAMFILES\MonApplication"
+
+# Section principale d'installation
+Section "Installer"
+
+  # Créer le répertoire d'installation
+  CreateDirectory "$INSTDIR"
+
+  # Copier les fichiers de l'application
+  SetOutPath "$INSTDIR"
+  File "MonApplication.exe"
+
+  # Créer un fichier de désinstallation
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+  # Ajouter une entrée dans le menu contextuel pour tous les fichiers (*)
+  WriteRegStr HKCR "*" "shell\MonApplication" "" "Ouvrir avec MonApplication"
+  WriteRegStr HKCR "*" "shell\MonApplication" "Icon" "$INSTDIR\MonApplication.exe"
+  
+  # Ajouter un sous-menu avec des actions supplémentaires
+  WriteRegStr HKCR "*" "shell\MonApplication\SubCommands" "" "Action1;Action2"
+
+  # Action 1
+  WriteRegStr HKCR "Software\Classes\MonApplication.Action1" "" "Action 1"
+  WriteRegStr HKCR "Software\Classes\MonApplication.Action1\command" "" '"$INSTDIR\MonApplication.exe" /action1'
+
+  # Action 2
+  WriteRegStr HKCR "Software\Classes\MonApplication.Action2" "" "Action 2"
+  WriteRegStr HKCR "Software\Classes\MonApplication.Action2\command" "" '"$INSTDIR\MonApplication.exe" /action2'
+
+SectionEnd
+
+# Section de désinstallation
+Section "Uninstall"
+
+  # Supprimer les fichiers d'application
+  Delete "$INSTDIR\MonApplication.exe"
+  Delete "$INSTDIR\Uninstall.exe"
+
+  # Supprimer les entrées de menu contextuel dans le registre
+  DeleteRegKey HKCR "*" "shell\MonApplication"
+  DeleteRegKey HKCR "Software\Classes\MonApplication.Action1"
+  DeleteRegKey HKCR "Software\Classes\MonApplication.Action2"
+
+  # Supprimer le répertoire d'installation
+  RMDir "$INSTDIR"
+
+SectionEnd
+```
+
+### Explication du script :
+
+1. **Menu contextuel principal :**
+   - `WriteRegStr HKCR "*" "shell\MonApplication" "" "Ouvrir avec MonApplication"` : Cette commande ajoute un item "Ouvrir avec MonApplication" au menu contextuel pour tous les fichiers (`*`).
+   - `WriteRegStr HKCR "*" "shell\MonApplication" "Icon" "$INSTDIR\MonApplication.exe"` : Cette commande associe une icône au menu contextuel de votre application.
+
+2. **Sous-menu :**
+   - `WriteRegStr HKCR "*" "shell\MonApplication\SubCommands" "" "Action1;Action2"` : Cela crée un sous-menu avec deux actions, `Action1` et `Action2`.
+   - Les actions sont définies séparément sous `Software\Classes\MonApplication.Action1` et `Software\Classes\MonApplication.Action2`, et chacune est associée à une commande spécifique (`"$INSTDIR\MonApplication.exe" /action1` et `"$INSTDIR\MonApplication.exe" /action2`).
+
+3. **Désinstallation :**
+   - La section de désinstallation supprime les entrées du registre pour restaurer l'état initial du système, en supprimant les clés que vous avez créées pour le menu contextuel.
+
+### Remarques importantes :
+
+1. **Clés de registre HKCR** : La clé `HKCR` (HKEY_CLASSES_ROOT) est utilisée pour gérer les associations de fichiers et les menus contextuels dans Windows. Cependant, elle combine les informations de `HKEY_LOCAL_MACHINE` et `HKEY_CURRENT_USER`. Si vous souhaitez que les modifications soient spécifiques à l'utilisateur, vous pouvez écrire directement dans `HKEY_CURRENT_USER\Software\Classes`.
+
+2. **Permissions administratives** : Modifier `HKCR` ou `HKEY_LOCAL_MACHINE` nécessite souvent des privilèges administratifs. Assurez-vous que l'installeur est exécuté avec des droits suffisants.
+
+3. **Types de fichiers spécifiques** : Si vous voulez que votre menu contextuel s'applique uniquement à certains types de fichiers, remplacez `"*"` par l'extension de fichier ou le type de fichier correspondant. Par exemple, pour les fichiers `.txt`, utilisez `HKCR "txtfile"`.
+
+4. **Sous-menus complexes** : Windows utilise une structure spécifique pour gérer les sous-menus dans le menu contextuel. Les sous-commandes permettent de définir plusieurs actions sous un même item parent.
+
+En suivant ce script, vous pouvez ajouter un item dans le menu contextuel qui déclenche un sous-menu proposant plusieurs actions. Cela permet d'étendre les fonctionnalités de votre application directement depuis l'explorateur de fichiers de Windows.
