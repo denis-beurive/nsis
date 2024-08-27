@@ -9,6 +9,12 @@ Get-VM | ?{$_.State -eq "Running"} | Select -ExpandProperty networkadapters
 > see [https://stackoverflow.com/questions/26003195/how-to-get-ip-address-of-all-virtual-machines-running-on-hyper-v](https://stackoverflow.com/questions/26003195/how-to-get-ip-address-of-all-virtual-machines-running-on-hyper-v)
 
 
+Transfer the installer from the host to the guest;
+
+```
+scp installer.exe dev@172.29.103.131:C:/Users/dev/Downloads
+```
+
 Get the Windows username:
 
 ```

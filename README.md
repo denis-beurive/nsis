@@ -23,3 +23,11 @@ The application used for this tutorial is given here:
 
 * [basic example](installer-1)
 
+## Defender submission
+
+	Submission ID: bc9a5e35-09b1-46d6-8b43-800cffc29abb
+	Status: Submitted
+	Submitted by: denis.beurive@gmail.com
+	Submitted: Aug 27, 2024 7:52:50 PM
+	User Opinion: Incorrect detection
+

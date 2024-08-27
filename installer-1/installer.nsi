@@ -1,3 +1,5 @@
+# Create the installer: makensis installer.nsi
+
 # Set the name of the installer
 OutFile "installer.exe"
 

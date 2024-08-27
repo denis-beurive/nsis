@@ -278,3 +278,198 @@ SectionEnd
 - **Privilèges d'administrateur** : Si vous modifiez le registre sous `HKEY_LOCAL_MACHINE`, assurez-vous que votre installateur demande les privilèges d'administrateur en utilisant la directive `RequestExecutionLevel admin`.
 - **Compatibilité** : Testez toujours votre script NSIS sur différents systèmes pour vérifier que les clés de registre sont créées correctement et que la désinstallation les supprime bien.
 
+
+#####################################################################################################
+
+Ajouter une application au menu "Démarrer" de Windows à l'aide de NSIS (Nullsoft Scriptable Install System) est une tâche courante lors de la création d'un installeur. NSIS vous permet de créer des raccourcis dans différents emplacements, y compris le menu "Démarrer".
+
+Voici les étapes et un exemple de script NSIS pour ajouter votre application au menu "Démarrer" :
+
+### Étapes de base :
+
+1. **Définir les répertoires** : Vous devez définir le répertoire d'installation de votre application ainsi que le répertoire où vous allez créer le raccourci dans le menu "Démarrer".
+2. **Créer un raccourci** : Utilisez la commande `CreateShortCut` de NSIS pour créer un raccourci vers votre application.
+3. **Ajouter une option pour désinstaller** : Il est aussi recommandé d'ajouter une option de désinstallation dans le même menu "Démarrer".
+
+### Exemple de script NSIS
+
+Voici un exemple de script qui montre comment installer une application, créer un raccourci dans le menu "Démarrer" et ajouter une option de désinstallation :
+
+```nsis
+# Nom de l'installeur
+OutFile "MonApplicationInstaller.exe"
+
+# Nom de l'application et répertoire d'installation
+Name "MonApplication"
+InstallDir "$PROGRAMFILES\MonApplication"
+
+# Section principale d'installation
+Section "Installer"
+
+  # Créer le répertoire d'installation
+  CreateDirectory "$INSTDIR"
+
+  # Copier les fichiers de l'application
+  SetOutPath "$INSTDIR"
+  File "MonApplication.exe"
+
+  # Créer le répertoire du menu Démarrer
+  CreateDirectory "$SMPROGRAMS\MonApplication"
+
+  # Créer un raccourci vers l'application dans le menu Démarrer
+  CreateShortCut "$SMPROGRAMS\MonApplication\MonApplication.lnk" "$INSTDIR\MonApplication.exe"
+
+  # Ajouter un raccourci pour désinstaller l'application
+  CreateShortCut "$SMPROGRAMS\MonApplication\Désinstaller MonApplication.lnk" "$INSTDIR\Uninstall.exe"
+
+SectionEnd
+
+# Section de désinstallation
+Section "Uninstall"
+
+  # Supprimer les fichiers d'application
+  Delete "$INSTDIR\MonApplication.exe"
+
+  # Supprimer les raccourcis du menu Démarrer
+  Delete "$SMPROGRAMS\MonApplication\MonApplication.lnk"
+  Delete "$SMPROGRAMS\MonApplication\Désinstaller MonApplication.lnk"
+
+  # Supprimer le répertoire du menu Démarrer
+  RMDir "$SMPROGRAMS\MonApplication"
+
+  # Supprimer le répertoire d'installation
+  RMDir "$INSTDIR"
+
+SectionEnd
+
+# Créer un fichier de désinstallation
+WriteUninstaller "$INSTDIR\Uninstall.exe"
+```
+
+### Explication du script :
+
+1. **OutFile "MonApplicationInstaller.exe"** : Spécifie le nom de l'installeur généré.
+2. **InstallDir "$PROGRAMFILES\MonApplication"** : Définit le répertoire d'installation par défaut sous `C:\Program Files`.
+3. **Section "Installer"** : La section principale d'installation :
+   - Crée le répertoire d'installation (`CreateDirectory`).
+   - Copie les fichiers de l'application (`File`).
+   - Crée le répertoire dans le menu "Démarrer" (`CreateDirectory`).
+   - Crée un raccourci pour l'application dans ce répertoire (`CreateShortCut`).
+4. **Section "Uninstall"** : La section de désinstallation :
+   - Supprime les fichiers de l'application et les raccourcis créés.
+   - Supprime les répertoires du menu "Démarrer" et du répertoire d'installation.
+5. **WriteUninstaller "$INSTDIR\Uninstall.exe"** : Crée un fichier de désinstallation qui pourra être lancé pour désinstaller l'application.
+
+### Variables utilisées :
+
+- `$INSTDIR` : Représente le répertoire d'installation de l'application.
+- `$SMPROGRAMS` : Représente le répertoire du menu "Démarrer" pour l'utilisateur actuel.
+
+### Personnalisation :
+- Remplacez `"MonApplication.exe"` par le nom de votre fichier exécutable.
+- Vous pouvez ajouter plus de fichiers à copier si votre application en a besoin.
+- Vous pouvez également ajouter des conditions ou des options supplémentaires (comme des icônes personnalisées pour les raccourcis).
+
+En utilisant ce script, votre application apparaîtra dans le menu "Démarrer" avec un raccourci vers l'exécutable principal, ainsi qu'une option pour désinstaller l'application.
+
+#####################################################################################################
+
+Oui, il est tout à fait possible d'ajouter votre application à la liste des applications installées dans le Panneau de configuration de Windows (et également accessible via les paramètres "Applications et fonctionnalités"). Pour ce faire, vous devez ajouter certaines informations dans le registre de Windows via votre script NSIS. C'est ce qui permet à Windows de reconnaître votre application comme étant installée, et d'afficher une option pour la désinstaller via le Panneau de configuration.
+
+Voici les étapes générales et un exemple de script NSIS pour enregistrer votre application dans la liste des applications installées :
+
+### Étapes à suivre :
+
+1. **Écrire dans le Registre** : Vous devez ajouter une clé dans le registre Windows sous `HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall` (ou `HKEY_CURRENT_USER` pour une installation par utilisateur) avec les informations pertinentes sur votre application.
+2. **Inclure le chemin de désinstallation** : Vous devez fournir un chemin vers le fichier de désinstallation (créé lors de l'installation).
+3. **Fournir des détails comme la taille de l'installation, la version de l'application, etc.** : Ce sont des détails supplémentaires qui apparaîtront dans la liste des applications installées.
+
+### Exemple de script NSIS
+
+Voici un exemple de script NSIS qui montre comment enregistrer une application dans la liste des programmes installés de Windows :
+
+```nsis
+# Nom de l'installeur
+OutFile "MonApplicationInstaller.exe"
+
+# Nom de l'application et répertoire d'installation
+Name "MonApplication"
+InstallDir "$PROGRAMFILES\MonApplication"
+
+# Section principale d'installation
+Section "Installer"
+
+  # Créer le répertoire d'installation
+  CreateDirectory "$INSTDIR"
+
+  # Copier les fichiers de l'application
+  SetOutPath "$INSTDIR"
+  File "MonApplication.exe"
+
+  # Créer un raccourci dans le menu Démarrer
+  CreateDirectory "$SMPROGRAMS\MonApplication"
+  CreateShortCut "$SMPROGRAMS\MonApplication\MonApplication.lnk" "$INSTDIR\MonApplication.exe"
+  CreateShortCut "$SMPROGRAMS\MonApplication\Désinstaller MonApplication.lnk" "$INSTDIR\Uninstall.exe"
+
+  # Créer le fichier de désinstallation
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+  # Ajouter l'application à la liste des applications installées
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication" "DisplayName" "MonApplication"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication" "UninstallString" "$INSTDIR\Uninstall.exe"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication" "InstallLocation" "$INSTDIR"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication" "DisplayIcon" "$INSTDIR\MonApplication.exe"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication" "Publisher" "Nom de l'Éditeur"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication" "DisplayVersion" "1.0.0"
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication" "NoModify" 1
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication" "NoRepair" 1
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication" "EstimatedSize" 20480 ; Taille approximative en Ko
+
+SectionEnd
+
+# Section de désinstallation
+Section "Uninstall"
+
+  # Supprimer les fichiers d'application
+  Delete "$INSTDIR\MonApplication.exe"
+  Delete "$INSTDIR\Uninstall.exe"
+
+  # Supprimer les raccourcis du menu Démarrer
+  Delete "$SMPROGRAMS\MonApplication\MonApplication.lnk"
+  Delete "$SMPROGRAMS\MonApplication\Désinstaller MonApplication.lnk"
+  RMDir "$SMPROGRAMS\MonApplication"
+
+  # Supprimer l'entrée du registre
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication"
+
+  # Supprimer le répertoire d'installation
+  RMDir "$INSTDIR"
+
+SectionEnd
+```
+
+### Explication des éléments spécifiques :
+
+1. **Clé de Registre :**
+   - `WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MonApplication"` : Cette commande ajoute une nouvelle clé dans le registre sous `HKEY_LOCAL_MACHINE` dans le chemin des applications installées.
+   - `"DisplayName"` : Le nom de l'application tel qu'il apparaîtra dans la liste des programmes installés.
+   - `"UninstallString"` : Chemin du fichier de désinstallation (qui sera appelé lorsqu'on choisit de désinstaller l'application via le Panneau de configuration).
+   - `"InstallLocation"` : Répertoire d'installation de l'application.
+   - `"DisplayIcon"` : Icône associée à l'application dans la liste.
+   - `"Publisher"` : Le nom de l'éditeur.
+   - `"DisplayVersion"` : La version de l'application.
+   - `"NoModify"` et `"NoRepair"` : Empêche l'utilisateur de modifier ou réparer l'installation depuis le Panneau de configuration (optionnel).
+   - `"EstimatedSize"` : Taille approximative de l'installation en Ko (optionnel).
+
+2. **Désinstallation :**
+   - Lors de la désinstallation, vous devez également supprimer l'entrée du registre avec `DeleteRegKey`.
+
+3. **Permissions :**
+   - Le script ci-dessus écrit dans `HKLM` (HKEY_LOCAL_MACHINE), ce qui nécessite des privilèges administratifs pour l'installation. Si vous voulez permettre une installation par utilisateur, vous pouvez écrire dans `HKCU` (HKEY_CURRENT_USER) à la place.
+
+### Remarques supplémentaires :
+
+- **Privilèges administratifs** : Si vous écrivez dans `HKLM`, assurez-vous que l'installeur est exécuté avec des privilèges administratifs (`RequestExecutionLevel admin`).
+- **Compatibilité avec les versions de Windows** : Ce script est compatible avec les versions modernes de Windows (Windows 7, 8, 10, 11). Les entrées dans le registre sont essentielles pour apparaître dans "Applications et fonctionnalités" et dans le Panneau de configuration.
+
+En suivant ces étapes, votre application apparaîtra correctement dans la liste des applications installées de Windows, avec la possibilité de la désinstaller directement via cette interface.
