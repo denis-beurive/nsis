@@ -12,7 +12,7 @@ Get-VM | ?{$_.State -eq "Running"} | Select -ExpandProperty networkadapters
 Transfer the installer from the host to the guest;
 
 ```
-scp installer.exe dev@172.29.103.131:C:/Users/dev/Downloads
+scp installer.exe dev@172.21.132.116:C:/Users/dev/Downloads
 ```
 
 Get the Windows username:

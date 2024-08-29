@@ -1,5 +1,4 @@
-# This example shows how to use the moder UI
-#
+# This example shows how to create a contextual menu with submenus
 # Create the installer: makensis installer.nsi
 
 # Use the Modern UI
@@ -59,12 +58,20 @@ Section
   	WriteRegStr HKCU "Software\nsis_app" "Path" "$INSTDIR\nsis_app.exe" 
   	WriteRegStr HKCU "Software\nsis_app" "Version" "1.0.0"
 
-  	# Context menu when you right click on a file
-  	WriteRegStr HKCR "*\shell\nsis_app" "" "Open with nsis_app"
-  	WriteRegStr HKCR "*\shell\nsis_app" "Icon" "$INSTDIR\nsis_app.ico"
-  	WriteRegStr HKCR "*\shell\nsis_app\command" "" '"$INSTDIR\nsis_app.exe" "%1"'
+	# menu-name,submenu,icon
+	WriteRegStr	HKCR "*\shell\nsis_app" MUIVerb" "nsis app"
+	WriteRegStr	HKCR "*\shell\nsis_app" "ExtendedSubCommandsKey" "*\nsis_app_menu"
+	WriteRegStr	HKCR "*\shell\nsis_app" "Icon" "$INSTDIR\nsis_app.ico" 
 
-  	# Make the uninstaller appear in the add/remove sofware UI
+	WriteRegStr	HKCR "*\nsis_app_menu\shell\crypt" "MUIVerb" "Crypt this file"				
+	WriteRegStr	HKCR "*\nsis_app_menu\shell\crypt\command" "" '"$INSTDIR\nsis_app.exe" "%1"'
+	WriteRegStr	HKCR "*\nsis_app_menu\shell\crypt" "Icon" "$INSTDIR\nsis_app.ico" 
+
+	WriteRegStr	HKCR "*\nsis_app_menu\shell\decrypt" "MUIVerb" "Decrypt the file"				
+	WriteRegStr	HKCR "*\nsis_app_menu\shell\decrypt\command" "" '"$INSTDIR\nsis_app.exe" "%1"'
+	WriteRegStr	HKCR "*\nsis_app_menu\shell\decrypt" "Icon" "$INSTDIR\nsis_app.ico" 
+			
+	# Make the uninstaller appear in the add/remove sofware UI
 	WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\nsis_app" "DisplayName" "nsis_app"
   	WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\nsis_app" "UninstallString" "$INSTDIR\uninstaller.exe"
   	WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\nsis_app" "InstallLocation" "$INSTDIR"
@@ -92,8 +99,10 @@ SectionEnd
 
 Section "Uninstall"
 	
+	# TODO vérifier que toutes les clés sont bien supprimées
 	DeleteRegKey HKCU "Software\nsis_app"
 	DeleteRegKey HKCR "*\shell\nsis_app"
+	DeleteRegKey HKCR "*\nsis_app_menu"
 	DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\nsis_app"
 
 	Delete "$SMPROGRAMS\nsis_app\Execute nsis_app.lnk"
